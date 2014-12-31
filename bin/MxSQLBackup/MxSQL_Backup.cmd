@@ -193,9 +193,10 @@ IF NOT "%ERRORLEVEL%"=="0" call:Log "Cannot get database list from instance %MSS
 FOR /F "tokens=*" %%i IN (%DBLIST%) DO (
 call:Log "Backing up database: %%i"
 SqlCmd -E -S %MSSQL_INSTANCE% -b -Q "BACKUP DATABASE [%%i] TO Disk='%BACKUP_PATH%\%%i.bak'"
-IF NOT "%ERRORLEVEL%"=="0" call:Log "Failed Backing up database %%i" && set SCRIPT_ERROR=1
-IF "%ERRORLEVEL%"=="0" IF "%COMPRESS%"=="1" "%curdir%\gzip.exe" -f "%BACKUP_PATH%\%%i.bak"
+IF NOT "!ERRORLEVEL!"=="0" call:Log "Failed Backing up database %%i" && set SCRIPT_ERROR=1
+IF EXIST "%BACKUP_PATH%\%%i.bak" IF "%COMPRESS%"=="1" "%curdir%\gzip.exe" -f "%BACKUP_PATH%\%%i.bak"
 )
+IF "!SCRIPT_ERROR!"=="1" call:Mailer
 GOTO:EOF
 
 :RotateCopies
