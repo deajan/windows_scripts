@@ -52,7 +52,7 @@ IF NOT "%2"=="" set MaxAllowedLength=%2%
 call:GetComputerName
 call:SetOutputFile
 call:Log "Beginning search for path length over %MaxAllowedLength% chars in %search_path%"
-"%curdir%\findverylongfilenames.exe" "%search_path% %MaxAllowedLength% > "%curdir%\%REPORT_FILE%"
+"%curdir%\findverylongfilenames.exe" "%search_path%" %MaxAllowedLength% > "%curdir%\%REPORT_FILE%"
 call "%curdir%\filesize.cmd" "%curdir%\%REPORT_FILE%"
 IF NOT %ERRORLEVEL%==0 IF "%SEND_ALERTS%"=="yes" (
 call:Log "Exceeding path length found."
