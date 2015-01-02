@@ -28,7 +28,7 @@ set SMTP_PW=
 set SMTP_PWB64=U29Zb3VUcmllZFRoaXM/IA0K
 set SENDER=%SMTP_USER%
 set RECEIVER=monitor@example.com
-set WARNING_MESSAGE=WARNING, SQL Backup alert
+set WARNING_MESSAGE=WARNING, long filenames found
 :: Mail server encryption, possible values are tls, ssl, none
 set SECURITY=tls
 
