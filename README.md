@@ -7,7 +7,7 @@ Active Directory logon script that checks group membership and optionally logs c
 Backups Microsoft SQL Server 2005/2008/2012 and MySQL / MariaDB databases, supports compression and backup rotation. Sends alert emails on backup failure.
 
 #### FindLongFileNames.cmd
-Creates a report of path and filenames exceeding 256 chars. Sends alert email if found.
+Searches a designated path for full filenames exceeding 255 characters (or any other value), and mails a report if some exceeding filenames are met.
 
 #### ServiceAlert.cmd
 Restarts a Windows service including custom commands, logs and sends alert emails.

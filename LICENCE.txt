@@ -23,8 +23,12 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Third Party binaries:
+Third Party binaries that may be redistributed:
 
 - Gzip by Free Software Foundation, Inc. Copyright (C) 1992, 1993 Jean-loup Gailly, http://gnuwin32.sourceforge.net/
+
 - Base64 by Matthias Gärtner, http://www.rtner.de/software/base64.htm
+
 - Mailsend by Muhammad Muquit, http://www.muquit.com
+
+- FindVeryLongFileNames by Voith's CODE, http://http://www.vcode.no/web/vcode.nsf/downloads/FindVeryLongFileNames
