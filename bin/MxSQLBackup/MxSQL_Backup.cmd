@@ -4,7 +4,8 @@
 :: v2.0 by Orsiris de Jong - http://www.netpower.fr - ozy@netpower.fr
 :: 
 :: Changelog
-:: 30/12/2014 - V2	- Merged earlier versions of MSSQL and MySQL backup scripts into one
+:: 02/01/2015 - Added maximum attachment size check
+:: 29/12/2014 - V2	- Merged earlier versions of MSSQL and MySQL backup scripts into one
 ::					- Better log file
 ::					- Added old backup files deletion option
 ::					- Improved file rotation to deal with all files at once
@@ -29,7 +30,7 @@ set COMPRESS=1
 :: Compress backup logs before sending by email
 set COMPRESS_LOGS=1
 :: Compression level, 1=fast, 9=best
-set COMPRESSLEVEL=9
+set COMPRESS_LEVEL=9
 
 :: Alert email send options
 set SEND_ALERTS=yes
@@ -144,14 +145,18 @@ call:MailerMailSend
 GOTO:EOF
 
 :SetAttachment
-IF %LOG_FILE%=="" GOTO:EOF
+IF NOT EXIST "%LOG_FILE%" GOTO:EOF
 IF "%COMPRESS_LOGS%"=="1" (
 	for %%I in (%LOG_FILE%) do set compressed_file=%%~nxI
-	"%curdir%\gzip.exe" -9 -c "%LOG_FILE%" > "%curdir%\!compressed_file!.gz"
-	set attachment=-attach "%curdir%\!compressed_file!.gz"
+	"%curdir%\gzip.exe" -%COMPRESS_LEVEL% -f "%LOG_FILE%"
+	set attachment_filename=%curdir%\!compressed_file!.gz
 ) ELSE (
-	set attachment=-attach "%curdir%\%LOG_FILE%"
+	set attachment_filaneme=%curdir%\%LOG_FILE%
 )
+:: Check if report file is more than 9MB, if so, don't send it as attachment
+call "%curdir%\filesize.cmd" "%attachment_filename%"
+IF %ERRORLEVEL% GTR 9000000 call:Log "Report file too big to mail" && GOTO:EOF
+set attachment=-attach "%attachment_filename%"
 GOTO:EOF
 
 :MailerMailSend
@@ -175,7 +180,7 @@ IF NOT "%ERRORLEVEL%"=="0" call:Log "Cannot get database list from server %MYSQL
 :: Backing up each database in %DBLIST% file
 FOR /F "tokens=*" %%i IN (%DBLIST%) DO (
 call:Log "Backing up Database: %%i"
-IF "%COMPRESS%"=="1" "%MYSQL_BIN_PATH%\mysqldump.exe" -h %MYSQL_HOST% -P %MYSQL_PORT% -u %MYSQL_USER% --password=%MYSQL_PW% --database %%i | "%curdir%\gzip.exe" -%COMPRESSION_LEVEL% -c > "%BACKUP_PATH%\%%i.sql%COMPRESS_EXTENSION%"
+IF "%COMPRESS%"=="1" "%MYSQL_BIN_PATH%\mysqldump.exe" -h %MYSQL_HOST% -P %MYSQL_PORT% -u %MYSQL_USER% --password=%MYSQL_PW% --database %%i | "%curdir%\gzip.exe" -%COMPRESS_LEVEL% -c > "%BACKUP_PATH%\%%i.sql%COMPRESS_EXTENSION%"
 IF NOT "%ERRORLEVEL%"=="0" call:Log "Failed backing up database %%i" && set SCRIPT_ERROR=1
 IF NOT "%COMPRESS%"=="1" "%MYSQL_BIN_PATH%\mysqldump.exe" -h %MYSQL_HOST% -P %MYSQL_PORT% -u %MYSQL_USER% --password=%MYSQL_PW% --database %%i > "%BACKUP_PATH%\%%i.sql"
 IF NOT "%ERRORLEVEL%"=="0" call:Log "Failed backing up database %%i" && set SCRIPT_ERROR=1
@@ -194,7 +199,7 @@ FOR /F "tokens=*" %%i IN (%DBLIST%) DO (
 call:Log "Backing up database: %%i"
 SqlCmd -E -S %MSSQL_INSTANCE% -b -Q "BACKUP DATABASE [%%i] TO Disk='%BACKUP_PATH%\%%i.bak'"
 IF NOT "!ERRORLEVEL!"=="0" call:Log "Failed Backing up database %%i" && set SCRIPT_ERROR=1
-IF EXIST "%BACKUP_PATH%\%%i.bak" IF "%COMPRESS%"=="1" "%curdir%\gzip.exe" -f "%BACKUP_PATH%\%%i.bak"
+IF EXIST "%BACKUP_PATH%\%%i.bak" IF "%COMPRESS%"=="1" "%curdir%\gzip.exe" -%COMPRESS_LEVEL% -f "%BACKUP_PATH%\%%i.bak"
 )
 IF "!SCRIPT_ERROR!"=="1" call:Mailer
 GOTO:EOF
