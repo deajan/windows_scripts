@@ -4,6 +4,7 @@
 :: v2.0 by Orsiris de Jong - http://www.netpower.fr - ozy@netpower.fr
 :: 
 :: Changelog
+:: 03/01/2015 - Added support for pigz threaded compression
 :: 02/01/2015 - Added maximum attachment size check
 :: 29/12/2014 - V2	- Merged earlier versions of MSSQL and MySQL backup scripts into one
 ::					- Better log file
@@ -61,7 +62,7 @@ set MYSQL_PORT=3306
 set MYSQL_BIN_PATH=C:\Program Files\MariaDB 5.5\bin
 
 :: Misc
-:: Get Script working dir to find out where gzip.exe, base64.exe and mailsend.exe executables are.
+:: Get Script working dir to find out where gzip.exe, pigz.exe, base64.exe and mailsend.exe executables are.
 set curdir=%~dp0
 set curdir=%curdir:~0,-1%
 :: File containing database list to backup
@@ -74,7 +75,12 @@ set DEBUG=no
 
 setlocal enabledelayedexpansion
 
-IF "%COMPRESS%"=="1" set COMPRESS_EXTENSION=.gz
+IF "%COMPRESS%"=="1" (
+IF EXIST "%curdir%\gzip.exe" set COMPRESS_PROGRAM=gzip.exe && set COMPRESS_EXTENSION=.gz
+:: Finally use pigz if available, which is the threaded version of gzip
+IF EXIST "%curdir%\pigz.exe" set COMPRESS_PROGRAM=pigz.exe && set COMPRESS_EXTENSION=.gz
+IF "!COMPRESS_PROGRAM!"=="" set COMPRESS=0
+)
 IF NOT EXIST "%BACKUP_PATH%" MKDIR "%BACKUP_PATH%"
 call:GetComputerName
 IF "%ROTATE_BACKUPS%"=="yes" call:RotateCopies
@@ -148,8 +154,8 @@ GOTO:EOF
 IF NOT EXIST "%LOG_FILE%" GOTO:EOF
 IF "%COMPRESS_LOGS%"=="1" (
 	for %%I in (%LOG_FILE%) do set compressed_file=%%~nxI
-	"%curdir%\gzip.exe" -%COMPRESS_LEVEL% -f "%LOG_FILE%"
-	set attachment_filename=%curdir%\!compressed_file!.gz
+	%COMPRESS_PROGRAM% -%COMPRESS_LEVEL% -f "%LOG_FILE%"
+	set attachment_filename=%curdir%\!compressed_file!%COMPRESS_EXTENSION%
 ) ELSE (
 	set attachment_filaneme=%curdir%\%LOG_FILE%
 )
@@ -180,7 +186,7 @@ IF NOT "%ERRORLEVEL%"=="0" call:Log "Cannot get database list from server %MYSQL
 :: Backing up each database in %DBLIST% file
 FOR /F "tokens=*" %%i IN (%DBLIST%) DO (
 call:Log "Backing up Database: %%i"
-IF "%COMPRESS%"=="1" "%MYSQL_BIN_PATH%\mysqldump.exe" -h %MYSQL_HOST% -P %MYSQL_PORT% -u %MYSQL_USER% --password=%MYSQL_PW% --database %%i | "%curdir%\gzip.exe" -%COMPRESS_LEVEL% -c > "%BACKUP_PATH%\%%i.sql%COMPRESS_EXTENSION%"
+IF "%COMPRESS%"=="1" "%MYSQL_BIN_PATH%\mysqldump.exe" -h %MYSQL_HOST% -P %MYSQL_PORT% -u %MYSQL_USER% --password=%MYSQL_PW% --database %%i | %COMPRESS_PROGRAM% -%COMPRESS_LEVEL% -c > "%BACKUP_PATH%\%%i.sql%COMPRESS_EXTENSION%"
 IF NOT "%ERRORLEVEL%"=="0" call:Log "Failed backing up database %%i" && set SCRIPT_ERROR=1
 IF NOT "%COMPRESS%"=="1" "%MYSQL_BIN_PATH%\mysqldump.exe" -h %MYSQL_HOST% -P %MYSQL_PORT% -u %MYSQL_USER% --password=%MYSQL_PW% --database %%i > "%BACKUP_PATH%\%%i.sql"
 IF NOT "%ERRORLEVEL%"=="0" call:Log "Failed backing up database %%i" && set SCRIPT_ERROR=1
@@ -199,7 +205,7 @@ FOR /F "tokens=*" %%i IN (%DBLIST%) DO (
 call:Log "Backing up database: %%i"
 SqlCmd -E -S %MSSQL_INSTANCE% -b -Q "BACKUP DATABASE [%%i] TO Disk='%BACKUP_PATH%\%%i.bak'"
 IF NOT "!ERRORLEVEL!"=="0" call:Log "Failed Backing up database %%i" && set SCRIPT_ERROR=1
-IF EXIST "%BACKUP_PATH%\%%i.bak" IF "%COMPRESS%"=="1" "%curdir%\gzip.exe" -%COMPRESS_LEVEL% -f "%BACKUP_PATH%\%%i.bak"
+IF EXIST "%BACKUP_PATH%\%%i.bak" IF "%COMPRESS%"=="1" %COMPRESS_PROGRAM% -%COMPRESS_LEVEL% -f "%BACKUP_PATH%\%%i.bak"
 )
 IF "!SCRIPT_ERROR!"=="1" call:Mailer
 GOTO:EOF

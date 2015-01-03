@@ -14,7 +14,7 @@ Restarts a Windows service including custom commands, logs and sends alert email
 
 #### Other small scripts
 
-**DelTempAttributes.ps** - Removes temporary bit from files in order to force DFS Replication to process those files.
+**RemoveTemporaryAttribute.ps1** - Recursively removes temporary bit from files in a folder in order to force DFS Replication to process those files.
 
 **ImportADUsers.cmd** - Reads CSV files and imports them as Active Directory Users
 
