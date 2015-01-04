@@ -50,10 +50,10 @@ set search_path=%search_path:"=%
 
 IF NOT EXIST "%search_path%" GOTO Usage
 
-IF "%COMPRESS%"=="1" (
-IF EXIST "%curdir%\gzip.exe" set COMPRESS_PROGRAM=gzip.exe && set COMPRESS_EXTENSION=.gz
+IF "%COMPRESS_LOGS%"=="1" (
+IF EXIST "%curdir%\gzip.exe" set COMPRESS_PROGRAM=%curdir%\gzip.exe && set COMPRESS_EXTENSION=.gz
 :: Finally use pigz if available, which is the threaded version of gzip
-IF EXIST "%curdir%\pigz.exe" set COMPRESS_PROGRAM=pigz.exe && set COMPRESS_EXTENSION=.gz
+IF EXIST "%curdir%\pigz.exe" set COMPRESS_PROGRAM=%curdir%\pigz.exe && set COMPRESS_EXTENSION=.gz
 IF "!COMPRESS_PROGRAM!"=="" set COMPRESS=0
 )
 IF NOT "%2"=="" set MaxAllowedLength=%2%
