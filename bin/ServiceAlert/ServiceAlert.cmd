@@ -5,8 +5,9 @@
 :: Will relaunch the service, eventually executing other commands and send an alert via email'affichage correct dans les mails)
 
 :: Changelog
-:: 03/01/2015: - Merged codebase with other scripts
-:: 20/11/2014: Correction d'un bug si le fichier log n'est pas spécifié
+:: 04/01/2015 - Added some compression program sanity checks and support for pigz
+:: 03/01/2015 - Merged codebase with other scripts
+:: 20/11/2014 - Corrected a bug when log file isn't specified
 
 :: Compress backup logs before sending by email
 set COMPRESS_LOGS=1
@@ -38,9 +39,17 @@ set LOG_FILE=%curdir%\ServiceAlert.log
 
 :: ---------------------------------------------------------------------------------------------------------------------------
 
+setlocal enabledelayedexpansion
+
 IF "%1"=="" GOTO Usage
 
-setlocal enabledelayedexpansion
+IF "%COMPRESS%"=="1" (
+IF EXIST "%curdir%\gzip.exe" set COMPRESS_PROGRAM=gzip.exe && set COMPRESS_EXTENSION=.gz
+:: Finally use pigz if available, which is the threaded version of gzip
+IF EXIST "%curdir%\pigz.exe" set COMPRESS_PROGRAM=pigz.exe && set COMPRESS_EXTENSION=.gz
+IF "!COMPRESS_PROGRAM!"=="" set COMPRESS=0
+)
+
 call:GetComputerName
 call:Log "Restarting service %1"
 :: ------------------------------------- RESTART BEGIN
@@ -114,8 +123,8 @@ GOTO:EOF
 IF NOT EXIST "%REPORT_FILE%" GOTO:EOF
 IF "%COMPRESS_LOGS%"=="1" (
 	for %%I in (%REPORT_FILE%) do set compressed_file=%%~nxI
-	"%curdir%\gzip.exe" -%COMPRESS_LEVEL% -f "%REPORT_FILE%"
-	set attachment_filename=%curdir%\!compressed_file!.gz
+	"%COMPRESS_PROGRAM%" -%COMPRESS_LEVEL% -f "%REPORT_FILE%"
+	set attachment_filename=%curdir%\!compressed_file!%COMPRESS_EXTENSION%
 ) ELSE (
 	set attachment_filaneme=%curdir%\%REPORT_FILE%
 )

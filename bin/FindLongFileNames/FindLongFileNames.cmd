@@ -6,6 +6,7 @@
 :: v1.2 by Orsiris de Jong - http://www.netpower.fr - ozy@netpower.fr
 
 :: Changelog
+:: 04/01/2015 - Added some compression program sanity checks and support for pigz
 :: 02/01/2015 - Merged codebase with other scripts
 :: Somewhere in 2009: Initial version of this script
 
@@ -48,18 +49,25 @@ set search_path=%1
 set search_path=%search_path:"=%
 
 IF NOT EXIST "%search_path%" GOTO Usage
+
+IF "%COMPRESS%"=="1" (
+IF EXIST "%curdir%\gzip.exe" set COMPRESS_PROGRAM=gzip.exe && set COMPRESS_EXTENSION=.gz
+:: Finally use pigz if available, which is the threaded version of gzip
+IF EXIST "%curdir%\pigz.exe" set COMPRESS_PROGRAM=pigz.exe && set COMPRESS_EXTENSION=.gz
+IF "!COMPRESS_PROGRAM!"=="" set COMPRESS=0
+)
 IF NOT "%2"=="" set MaxAllowedLength=%2%
 call:GetComputerName
 call:SetOutputFile
 call:Log "Beginning search for path length over %MaxAllowedLength% chars in %search_path%"
 "%curdir%\findverylongfilenames.exe" "%search_path%" %MaxAllowedLength% > "%curdir%\%REPORT_FILE%"
 call "%curdir%\filesize.cmd" "%curdir%\%REPORT_FILE%"
-IF NOT %ERRORLEVEL%==0 IF "%SEND_ALERTS%"=="yes" (
+IF NOT %ERRORLEVEL% LEQ 0 IF "%SEND_ALERTS%"=="yes" (
 call:Log "Exceeding path length found."
 call:Mailer
 )
 call "%curdir%\filesize.cmd" "%curdir%\%REPORT_FILE%"
-IF %ERRORLEVEL%==0 call:Log "No exceeding path length found on this run." && del "%curdir%\%REPORT_FILE%" /F /Q
+IF %ERRORLEVEL% LEQ 0 call:Log "No exceeding path length found on this run." && del "%curdir%\%REPORT_FILE%" /F /Q
 GOTO END
 
 :SetOutputFile
@@ -137,8 +145,8 @@ GOTO:EOF
 IF NOT EXIST "%REPORT_FILE%" GOTO:EOF
 IF "%COMPRESS_LOGS%"=="1" (
 	for %%I in (%REPORT_FILE%) do set compressed_file=%%~nxI
-	"%curdir%\gzip.exe" -%COMPRESS_LEVEL% -f "%REPORT_FILE%"
-	set attachment_filename=%curdir%\!compressed_file!.gz
+	"%COMPRESS_PROGRAM%" -%COMPRESS_LEVEL% -f "%REPORT_FILE%"
+	set attachment_filename=%curdir%\!compressed_file!%COMPRESS_EXTENSION%
 ) ELSE (
 	set attachment_filaneme=%curdir%\%REPORT_FILE%
 )
