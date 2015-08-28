@@ -4,15 +4,16 @@
 :: v2.0 by Orsiris de Jong - http://www.netpower.fr - ozy@netpower.fr
 :: 
 :: Changelog
-:: 03/01/2015 - Added support for pigz threaded compression
-:: 02/01/2015 - Added maximum attachment size check
-:: 29/12/2014 - V2	- Merged earlier versions of MSSQL and MySQL backup scripts into one
+:: 28 Aug 2015 - Fixed missing encryption setting for email, allow mail passwords containing spaces
+:: 03 Jan 2015 - Added support for pigz threaded compression
+:: 02 Jan 2015 - Added maximum attachment size check
+:: 29 Dec 2014 - V2	- Merged earlier versions of MSSQL and MySQL backup scripts into one
 ::					- Better log file
 ::					- Added old backup files deletion option
 ::					- Improved file rotation to deal with all files at once
 ::					- Added better email handling and logging
-:: 20/11/2014 - Fixed a bug when logfile is not specified
-:: 27/02/2013 - Added support for backup file rotation
+:: 20 Nov 2014 - Fixed a bug when logfile is not specified
+:: 27 Feb 2013 - Added support for backup file rotation
 :: Somewhere in 2012 : Quick and dirty backup script for MSSQL
 :: Somewhere in 2008 : Quick and dirty backup script for MySQL
 
@@ -134,11 +135,11 @@ IF NOT "%USERDNSDOMAIN%"=="" set COMPUTER_FQDN=%COMPUTERNAME%.%USERDNSDOMAIN%
 GOTO:EOF
 
 :GetSMTPPw
-IF "%SMTP_PW%"=="" IF NOT "%SMTP_PWB64%"=="" FOR /F %%i IN ('"echo %SMTP_PWB64% | "%curdir%\base64.exe" -d"') DO SET SMTP_PW=%%i
+IF "%SMTP_PW%"=="" IF NOT "%SMTP_PWB64%"=="" FOR /F "delims=" %%i IN ('"echo %SMTP_PASSWORD% | base64 -d"') DO SET SMTP_PASSWORD=%%i
 GOTO:EOF
 
 :GetMySQLPw
-IF "%MYSQL_PW%"=="" IF NOT "%MYSQL_PWB64%"=="" FOR /F %%i IN ('"echo %MYSQL_PWB64% | "%curdir%\base64.exe" -d"') DO SET MYSQL_PW=%%i
+IF "%MYSQL_PW%"=="" IF NOT "%MYSQL_PWB64%"=="" FOR /F "delims=" %%i IN ('"echo %SMTP_PASSWORD% | base64 -d"') DO SET SMTP_PASSWORD=%%i
 GOTO:EOF
 
 :Mailer
@@ -172,7 +173,7 @@ IF "%SECURITY%"=="ssl" set encryption=-ssl
 IF NOT "%SMTP_USER%"=="" set smtpuser=-auth -user %SMTP_USER%
 call:GetSMTPPw
 IF NOT "%SMTP_PW%"=="" set smtppassword=-pass %SMTP_PW%
-"%curdir%\mailsend.exe" -f "%SENDER%" -t "%RECEIVER%" -sub "%SUBJECT%" -M "%MAIL_CONTENT%" %attachment% -smtp "%SMTP_SERVER%" -port %SMTP_PORT% %smtpuser% %smtppassword% %encrypt% -log "%LOG_FILE%"
+"%curdir%\mailsend.exe" -f "%SENDER%" -t "%RECEIVER%" -sub "%SUBJECT%" -M "%MAIL_CONTENT%" %attachment% -smtp "%SMTP_SERVER%" -port %SMTP_PORT% %smtpuser% %smtppassword% %encryption% -log "%LOG_FILE%"
 IF NOT %ERRORLEVEL%==0 set SCRIPT_ERROR=1 && call:Log "Sending mail using mailsend failed."
 GOTO:EOF
 

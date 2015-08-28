@@ -5,9 +5,10 @@
 :: Will relaunch the service, eventually executing other commands and send an alert via email'affichage correct dans les mails)
 
 :: Changelog
-:: 04/01/2015 - Added some compression program sanity checks and support for pigz
-:: 03/01/2015 - Merged codebase with other scripts
-:: 20/11/2014 - Corrected a bug when log file isn't specified
+:: 28 Aug 2015 - Fixed missing encryption setting for email, allow mail passwords containing spaces
+:: 04 Jan 2015 - Added some compression program sanity checks and support for pigz
+:: 03 Jan 2015 - Merged codebase with other scripts
+:: 20 Nov 2014 - Corrected a bug when log file isn't specified
 
 :: Compress backup logs before sending by email
 set COMPRESS_LOGS=1
@@ -107,7 +108,7 @@ IF NOT "%USERDNSDOMAIN%"=="" set COMPUTER_FQDN=%COMPUTERNAME%.%USERDNSDOMAIN%
 GOTO:EOF
 
 :GetSMTPPw
-IF "%SMTP_PW%"=="" IF NOT "%SMTP_PWB64%"=="" FOR /F %%i IN ('"echo %SMTP_PWB64% | "%curdir%\base64.exe" -d"') DO SET SMTP_PW=%%i
+IF "%SMTP_PW%"=="" IF NOT "%SMTP_PWB64%"=="" FOR /F "delims=" %%i IN ('"echo %SMTP_PASSWORD% | base64 -d"') DO SET SMTP_PASSWORD=%%i
 GOTO:EOF
 
 :Mailer
@@ -141,7 +142,7 @@ IF "%SECURITY%"=="ssl" set encryption=-ssl
 IF NOT "%SMTP_USER%"=="" set smtpuser=-auth -user %SMTP_USER%
 call:GetSMTPPw
 IF NOT "%SMTP_PW%"=="" set smtppassword=-pass %SMTP_PW%
-"%curdir%\mailsend.exe" -f "%SENDER%" -t "%RECEIVER%" -sub "%SUBJECT%" -M "%MAIL_CONTENT%" %attachment% -smtp "%SMTP_SERVER%" -port %SMTP_PORT% %smtpuser% %smtppassword% %encrypt% -log "%LOG_FILE%"
+"%curdir%\mailsend.exe" -f "%SENDER%" -t "%RECEIVER%" -sub "%SUBJECT%" -M "%MAIL_CONTENT%" %attachment% -smtp "%SMTP_SERVER%" -port %SMTP_PORT% %smtpuser% %smtppassword% %encryption% -log "%LOG_FILE%"
 IF NOT %ERRORLEVEL%==0 set SCRIPT_ERROR=1 && call:Log "Sending mail using mailsend failed."
 GOTO:EOF
 
