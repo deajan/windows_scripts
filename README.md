@@ -20,7 +20,7 @@ Restarts a Windows service including custom commands, logs and sends alert email
 
 **w32time_reconfig.cmd** - Reconfigues Windows time service (targeted for Win2K8+ servers)
 
-**WhenToShutdown.cmd** - Shuts the computer down depending on the day of week
+**ExecuteOnWeekDays.cmd** - Executes commands depending on the day of week
 
 **PasswordNeverExpires.cmd** - Sets a user password to never expire
 
