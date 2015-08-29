@@ -1,0 +1,19 @@
+# File containing lists of Groups and users
+#
+# File structure (please use tabulations as separator character). Do not edit the first 8 lines which are the header:
+
+# Group name			# Description
+# User name				# First Name						# Last Name			# Group membership (up to 4 groups separated by a comma)
+
+
+--GROUPS--
+Direction				Direction de l'entreprise
+Technics				Technical users
+Marketing				Marketing and PR
+Human Ressources		HR Department staff
+
+--USERS--
+ijones					Indiana								Jones				Direction,Technics
+dvader					Darth								Vader				Marketing
+
+
