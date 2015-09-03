@@ -5,6 +5,7 @@
 :: Will relaunch the service, eventually executing other commands and send an alert via email'affichage correct dans les mails)
 
 :: Changelog
+:: 03 Sep 2015 - Added missing filesize.cmd
 :: 28 Aug 2015 - Fixed missing encryption setting for email, allow mail passwords containing spaces
 :: 04 Jan 2015 - Added some compression program sanity checks and support for pigz
 :: 03 Jan 2015 - Merged codebase with other scripts

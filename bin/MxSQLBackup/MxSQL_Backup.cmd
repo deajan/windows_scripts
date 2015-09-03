@@ -1,9 +1,12 @@
 @echo off
 
 :: SQL Backup script for MSSQL or MySQL/MariaDB Databases
-:: v2.0 by Orsiris de Jong - http://www.netpower.fr - ozy@netpower.fr
+:: v2.1 by Orsiris de Jong - http://www.netpower.fr - ozy@netpower.fr
 :: 
 :: Changelog
+:: 03 Sep 2015 - Added missing filesize.cmd
+:: 03 Sep 2015 - Fixed some error management code
+:: 03 Sep 2015 - Check connection to BDD before rotating copies
 :: 28 Aug 2015 - Fixed missing encryption setting for email, allow mail passwords containing spaces
 :: 03 Jan 2015 - Added support for pigz threaded compression
 :: 02 Jan 2015 - Added maximum attachment size check
@@ -50,6 +53,8 @@ set WARNING_MESSAGE=WARNING, SQL Backup alert
 set SECURITY=tls
 
 :: MSSQL specific parameters
+:: Instance can be LOCALHOST in order to backup all local databases from the default instance
+:: Instance can also be a tcp connection (ex: tcp:COMPUTER,1443) or a named pipe (ex: np:\\COMPUTER\pipe\sql\query) 
 set MSSQL_INSTANCE=SOMESERVER\INSTANCE
 
 :: MySQL / MariaDB specific parameters
@@ -84,6 +89,8 @@ IF "!COMPRESS_PROGRAM!"=="" set COMPRESS=0
 )
 IF NOT EXIST "%BACKUP_PATH%" MKDIR "%BACKUP_PATH%"
 call:GetComputerName
+call:CheckConnectivity
+IF "%STOP%"=="1" GOTO END
 IF "%ROTATE_BACKUPS%"=="yes" call:RotateCopies
 IF "%SERVER_TYPE%"=="mysql" call:MySQLBackupDatabases
 IF "%SERVER_TYPE%"=="mssql" call:MSSQLBackupDatabases
@@ -182,7 +189,7 @@ call:Log "Backing up MySQL databases from %MYSQL_HOST% on computer %COMPUTER_FQD
 call:GetMySQLPw
 :: Create List of databases to backup
 "%MYSQL_BIN_PATH%\mysql.exe" -h %MYSQL_HOST% -P %MYSQL_PORT% -u %MYSQL_USER% --password=%MYSQL_PW% -Bse "SHOW DATABASES;" | find /V "information_schema" | find /V "test" | find /V "performance_schema" > "%DBLIST%"
-IF NOT "%ERRORLEVEL%"=="0" call:Log "Cannot get database list from server %MYSQL_HOST%" && call:Mailer && GOTO END
+IF NOT "%ERRORLEVEL%"=="0" call:Log "Cannot get database list from server %MYSQL_HOST%" && call:Mailer
 
 :: Backing up each database in %DBLIST% file
 FOR /F "tokens=*" %%i IN (%DBLIST%) DO (
@@ -199,7 +206,7 @@ GOTO:EOF
 call:Log "Backing up MSSQL databases from %MSSQL_INSTANCE% on computer %COMPUTER_FQDN%"
 :: Create List of databases to backup
 SqlCmd -E -S %MSSQL_INSTANCE% -h-1 -W -b -Q "SET NoCount ON; SELECT Name FROM master.dbo.sysDatabases WHERE [Name] NOT IN ('master','model','msdb','tempdb')" > "%DBLIST%"
-IF NOT "%ERRORLEVEL%"=="0" call:Log "Cannot get database list from instance %MSSQL_INSTANCE%" && call:Mailer && GOTO END
+IF NOT "%ERRORLEVEL%"=="0" call:Log "Cannot get database list from instance %MSSQL_INSTANCE%" && call:Mailer
 
 :: Backup each database in %DBLIST% file
 FOR /F "tokens=*" %%i IN (%DBLIST%) DO (
@@ -241,7 +248,13 @@ GOTO:EOF
 IF "%SERVER_TYPE%"=="mysql" set BACKUP_EXTENSION=.sql%COMPRESS_EXTENSION%
 IF "%SERVER_TYPE%"=="mssql" set BACKUP_EXTENSION=.bak%COMPRESS_EXTENSION%
 FORFILES /P %BACKUP_PATH% /M *%BACKUP_EXTENSION% /S /D -%DELETE_OLD_DAYS% /C "cmd /c del @PATH" 2> NUL
-IF "%ERRORLEVEL%"=="9009" call:Log "Could not delete old backup files. FORFILES command could be missing."
+IF "%ERRORLEVEL%"=="9009" call:Log "Could not delete old backup files. FORFILES command could be missing." && call:Mailer
+GOTO:EOF
+
+:CheckConnectivity
+IF "%SERVER_TYPE%"=="mssql" SqlCmd -E -S %MSSQL_INSTANCE% -Q "select getdate()" > NUL
+IF "%SERVER_TYPE%"=="mysql" "%MYSQL_BIN_PATH%\mysql.exe" -h %MYSQL_HOST% -P %MYSQL_PORT% -u %MYSQL_USER% --password=%MYSQL_PW% -Bse "SHOW DATABASES;" > NUL
+IF NOT "%ERRORLEVEL%"=="0" set STOP=1&& call:Log "Could not connect to the database." && call:Mailer
 GOTO:EOF
 
 :END
