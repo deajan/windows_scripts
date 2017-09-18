@@ -8,6 +8,7 @@ Backups Microsoft SQL Server 2005/2008/2012 and MySQL / MariaDB databases, suppo
 
 #### FindLongFileNames.cmd
 Searches a designated path for full filenames exceeding 255 characters (or any other value), and mails a report if some exceeding filenames are met.
+FindVeryLongFileNames courtesy of http://www.vcode.no/web/vcode.nsf/downloads/FindVeryLongFileNames
 
 #### ServiceAlert.cmd
 Restarts a Windows service including custom commands, logs and sends alert emails.
