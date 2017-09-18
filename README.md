@@ -7,6 +7,7 @@ Active Directory logon script that checks group membership and optionally logs c
 Backups Microsoft SQL Server 2005/2008/2012 and MySQL / MariaDB databases, supports compression and backup rotation. Sends alert emails on backup failure.
 
 #### FindLongFileNames.cmd
+Do not use (some quirks on newer systems). Please see TLPD http://tlpd.sourceforge.net
 Searches a designated path for full filenames exceeding 255 characters (or any other value), and mails a report if some exceeding filenames are met.
 FindVeryLongFileNames courtesy of http://www.vcode.no/web/vcode.nsf/downloads/FindVeryLongFileNames
 
