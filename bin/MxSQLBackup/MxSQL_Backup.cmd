@@ -82,9 +82,9 @@ set DEBUG=no
 setlocal enabledelayedexpansion
 
 IF "%COMPRESS%"=="1" (
-IF EXIST "%curdir%\gzip.exe" set COMPRESS_PROGRAM=%curdir%\gzip.exe && set COMPRESS_EXTENSION=.gz
+IF EXIST "%curdir%\gzip.exe" set COMPRESS_PROGRAM=%curdir%\gzip.exe --rsyncable && set COMPRESS_EXTENSION=.gz
 :: Finally use pigz if available, which is the threaded version of gzip
-IF EXIST "%curdir%\pigz.exe" set COMPRESS_PROGRAM=%curdir%\pigz.exe && set COMPRESS_EXTENSION=.gz
+IF EXIST "%curdir%\pigz.exe" set COMPRESS_PROGRAM=%curdir%\pigz.exe --rsyncable && set COMPRESS_EXTENSION=.gz
 IF "!COMPRESS_PROGRAM!"=="" set COMPRESS=0
 )
 IF NOT EXIST "%BACKUP_PATH%" MKDIR "%BACKUP_PATH%"
