@@ -1,9 +1,11 @@
 @echo off
 
 :: SQL Backup script for MSSQL or MySQL/MariaDB Databases
-:: v2.1 by Orsiris de Jong - http://www.netpower.fr - ozy@netpower.fr
+:: v2.2 by Orsiris de Jong - http://www.netpower.fr - ozy@netpower.fr
 :: 
 :: Changelog
+:: 08 Nov 2018 - Added missing exitcode
+::             - Added --rsyncable option for gz files
 :: 03 Sep 2015 - Added missing filesize.cmd
 :: 03 Sep 2015 - Fixed some error management code
 :: 03 Sep 2015 - Check connection to BDD before rotating copies
@@ -260,5 +262,5 @@ GOTO:EOF
 :END
 :: Remove Temp file
 IF NOT "%DEBUG%"=="yes" IF EXIST "%DBLIST%" DEL /F /S /Q "%DBLIST%"
-
+EXIT /B !SCRIPT_ERROR!
 ENDLOCAL
